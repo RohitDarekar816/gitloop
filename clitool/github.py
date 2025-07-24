@@ -112,12 +112,13 @@ def get_latest_commits(token, interval=30, repo_filter=None, play_sound=True):
                         if sha not in seen_commits:
                             seen_commits.add(sha)
                             msg = commit['commit']['message']
+                            branch = commit['commit']['branch']
                             author = commit['commit']['author']['name']
                             # Convert UTC to IST
                             commit_dt_ist = commit_dt_utc.astimezone(ist)
                             timestamp_ist = commit_dt_ist.strftime('%Y-%m-%d %H:%M:%S IST')
                             url = commit['html_url']
-                            print(f"{Fore.CYAN}[NEW COMMIT]{Style.RESET_ALL} Repo: {Fore.YELLOW}{repo_name}{Style.RESET_ALL}\n  Author: {Fore.GREEN}{author}{Style.RESET_ALL}\n  Message: {Fore.MAGENTA}{msg}{Style.RESET_ALL}\n  Time: {Fore.BLUE}{timestamp_ist}{Style.RESET_ALL}\n  URL: {Fore.LIGHTWHITE_EX}{url}{Style.RESET_ALL}\n", flush=True)
+                            print(f"{Fore.CYAN}[NEW COMMIT]{Style.RESET_ALL} Repo: {Fore.YELLOW}{repo_name}{Style.RESET_ALL}\n  Author: {Fore.GREEN}{author}{Style.RESET_ALL}\n  Message: {Fore.MAGENTA}{msg}{Style.RESET_ALL}\n Branch:{branch}\n  Time: {Fore.BLUE}{timestamp_ist}{Style.RESET_ALL}\n  URL: {Fore.LIGHTWHITE_EX}{url}{Style.RESET_ALL}\n", flush=True)
                             if play_sound:
                                 play_notification_sound()
                 else:
