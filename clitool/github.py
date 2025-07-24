@@ -1,3 +1,4 @@
+from imaplib import Commands
 import requests
 import os
 import sys
@@ -140,7 +141,11 @@ def main():
     monitor_parser.add_argument('--repo', type=str, help='Only monitor this repository (format: owner/repo)')
     monitor_parser.add_argument('--no-sound', action='store_true', help='Disable sound notification for new commits')
 
+    # ✅ Set default to monitor (must be after defining monitor_parser)
+    parser.set_defaults(command='monitor')
+
     args = parser.parse_args()
+
 
     if args.command == 'login':
         client_id = input(Fore.CYAN + 'Enter your GitHub Client ID: ' + Style.RESET_ALL).strip()
@@ -165,20 +170,24 @@ def main():
             save_token(token)
             print(Fore.GREEN + 'GitHub token saved for future use.')
 
-        if args.repo:
-            print(Fore.YELLOW + f'Polling for new commits in {args.repo} every {args.interval} seconds. Showing only the past 3 days.')
-        else:
-            print(Fore.YELLOW + f'Polling for new commits in all repos every {args.interval} seconds. Showing only the past 3 days.')
+        interval = getattr(args, 'interval', 30)
+        repo = getattr(args, 'repo', None)
+        no_sound = getattr(args, 'no_sound', False)
 
-        if args.no_sound:
+        if repo:
+            print(Fore.YELLOW + f'Polling for new commits in {repo} every {interval} seconds. Showing only the past 3 days.')
+        else:
+            print(Fore.YELLOW + f'Polling for new commits in all repos every {interval} seconds. Showing only the past 3 days.')
+
+        if no_sound:
             print(Fore.LIGHTBLACK_EX + 'Sound notification is disabled.')
         elif not os.path.exists(SOUND_FILE):
             print(Fore.LIGHTBLACK_EX + f'Sound file not found: {SOUND_FILE}')
 
-        get_latest_commits(token, args.interval, args.repo, play_sound=not args.no_sound)
+        get_latest_commits(token, interval, repo, play_sound=not no_sound)
 
     else:
-        parser.print_help()
+        print(Fore.RED + 'Please use gitloop monitor to start monitoring your GitHub')
 
 if __name__ == '__main__':
     main()
