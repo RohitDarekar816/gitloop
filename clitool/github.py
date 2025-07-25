@@ -8,7 +8,8 @@ from colorama import init, Fore, Style
 from datetime import datetime, timedelta, timezone
 import pytz
 import argparse
-import winsound
+from playsound import playsound
+# import winsound
 
 init(autoreset=True)
 
@@ -41,13 +42,13 @@ def is_token_valid(token):
     resp = requests.get(f'{GITHUB_API_URL}/user', headers=headers)
     return resp.status_code == 200
 
-SOUND_FILE = os.path.join(os.path.dirname(__file__), 'ding.wav')  # Place a short wav in the same directory
+SOUND_FILE = './ding.wav'
 
-def play_notification_sound():
+def play_notification_sound(SOUND_FILE):
     try:
-        winsound.PlaySound(SOUND_FILE, winsound.SND_FILENAME | winsound.SND_ASYNC)
-    except Exception:
-        pass
+        playsound(SOUND_FILE)
+    except Exception as e:
+        print(Fore.RED + f'[ERROR] Could not play sound: {e}', file=sys.stderr)
 
 def github_device_flow(client_id, scope='repo'):
     # Step 1: Get device/user code
@@ -118,9 +119,9 @@ def get_latest_commits(token, interval=30, repo_filter=None, play_sound=True):
                             commit_dt_ist = commit_dt_utc.astimezone(ist)
                             timestamp_ist = commit_dt_ist.strftime('%Y-%m-%d %H:%M:%S IST')
                             url = commit['html_url']
-                            print(f"{Fore.CYAN}[NEW COMMIT]{Style.RESET_ALL} Repo: {Fore.YELLOW}{repo_name}{Style.RESET_ALL}\n  Author: {Fore.GREEN}{author}{Style.RESET_ALL}\n  Message: {Fore.MAGENTA}{msg}{Style.RESET_ALL}\n Time: {Fore.BLUE}{timestamp_ist}{Style.RESET_ALL}\n  URL: {Fore.LIGHTWHITE_EX}{url}{Style.RESET_ALL}\n", flush=True)
+                            print(f"{Fore.CYAN}[NEW COMMIT]{Style.RESET_ALL} Repo: {Fore.YELLOW}{repo_name}{Style.RESET_ALL}\n  Author: {Fore.GREEN}{author}{Style.RESET_ALL}\n  Message: {Fore.MAGENTA}{msg}{Style.RESET_ALL}\n  Time: {Fore.BLUE}{timestamp_ist}{Style.RESET_ALL}\n  URL: {Fore.LIGHTWHITE_EX}{url}{Style.RESET_ALL}\n", flush=True)
                             if play_sound:
-                                play_notification_sound()
+                                play_notification_sound(SOUND_FILE)
                 else:
                     print(Fore.RED + f'[ERROR] Failed to fetch commits for {repo_name}: {commits_resp.status_code}', file=sys.stderr)
             time.sleep(interval)
@@ -175,9 +176,9 @@ def main():
         no_sound = getattr(args, 'no_sound', False)
 
         if repo:
-            print(Fore.YELLOW + f'Polling for new commits in {repo} every {interval} seconds. Showing only the past 3 days.')
+            print(Fore.YELLOW + f'Polling for new commits in {repo} every {interval} seconds.')
         else:
-            print(Fore.YELLOW + f'Polling for new commits in all repos every {interval} seconds. Showing only the past 3 days.')
+            print(Fore.YELLOW + f'Polling for new commits in all repos every {interval} seconds.')
 
         if no_sound:
             print(Fore.LIGHTBLACK_EX + 'Sound notification is disabled.')

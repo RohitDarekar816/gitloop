@@ -1,5 +1,5 @@
 requests
 colorama
 pytz
-winsound
 setuptools
+playsound
