@@ -44,11 +44,11 @@ def is_token_valid(token):
 
 SOUND_FILE = './ding.wav'
 
-def play_notification_sound(SOUND_FILE):
-    try:
-        playsound(SOUND_FILE)
-    except Exception as e:
-        print(Fore.RED + f'[ERROR] Could not play sound: {e}', file=sys.stderr)
+# def play_notification_sound(SOUND_FILE):
+#     try:
+#         playsound(SOUND_FILE)
+#     except Exception as e:
+#         print(Fore.RED + f'[ERROR] Could not play sound: {e}', file=sys.stderr)
 
 def github_device_flow(client_id, scope='repo'):
     # Step 1: Get device/user code
@@ -120,8 +120,8 @@ def get_latest_commits(token, interval=30, repo_filter=None, play_sound=True):
                             timestamp_ist = commit_dt_ist.strftime('%Y-%m-%d %H:%M:%S IST')
                             url = commit['html_url']
                             print(f"{Fore.CYAN}[NEW COMMIT]{Style.RESET_ALL} Repo: {Fore.YELLOW}{repo_name}{Style.RESET_ALL}\n  Author: {Fore.GREEN}{author}{Style.RESET_ALL}\n  Message: {Fore.MAGENTA}{msg}{Style.RESET_ALL}\n  Time: {Fore.BLUE}{timestamp_ist}{Style.RESET_ALL}\n  URL: {Fore.LIGHTWHITE_EX}{url}{Style.RESET_ALL}\n", flush=True)
-                            if play_sound:
-                                play_notification_sound(SOUND_FILE)
+                            # if play_sound:
+                            #     play_notification_sound(SOUND_FILE)
                 else:
                     print(Fore.RED + f'[ERROR] Failed to fetch commits for {repo_name}: {commits_resp.status_code}', file=sys.stderr)
             time.sleep(interval)
@@ -184,8 +184,11 @@ def main():
             print(Fore.LIGHTBLACK_EX + 'Sound notification is disabled.')
         elif not os.path.exists(SOUND_FILE):
             print(Fore.LIGHTBLACK_EX + f'Sound file not found: {SOUND_FILE}')
-
-        get_latest_commits(token, interval, repo, play_sound=not no_sound)
+        try:    
+            get_latest_commits(token, interval, repo, play_sound=not no_sound)
+        except KeyboardInterrupt:
+            print(Fore.LIGHTBLUE_EX + '\n[INFO] Gitloop monitor stopped by user. Goodbye!')
+            sys.exit(0)
 
     else:
         print(Fore.RED + 'Please use gitloop monitor to start monitoring your GitHub')
