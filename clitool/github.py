@@ -120,6 +120,13 @@ def get_latest_commits(token, interval=30, repo_filter=None, play_sound=True):
                             timestamp_ist = commit_dt_ist.strftime('%Y-%m-%d %H:%M:%S IST')
                             url = commit['html_url']
                             print(f"{Fore.CYAN}[NEW COMMIT]{Style.RESET_ALL} Repo: {Fore.YELLOW}{repo_name}{Style.RESET_ALL}\n  Author: {Fore.GREEN}{author}{Style.RESET_ALL}\n  Message: {Fore.MAGENTA}{msg}{Style.RESET_ALL}\n  Time: {Fore.BLUE}{timestamp_ist}{Style.RESET_ALL}\n  URL: {Fore.LIGHTWHITE_EX}{url}{Style.RESET_ALL}\n", flush=True)
+                            # check if mattermost webhook URL is set
+                            if 'MATTERMOST_WEBHOOK_URL' in os.environ:
+                                # Send notification to Mattermost
+                                message = f"New commit in {repo_name} by {author}:\n Commit Msg: {msg}\nTime: {timestamp_ist}\nURL: {url}" 
+                                send_notification_to_mattermost(message)
+                            else:
+                                print(Fore.LIGHTBLACK_EX + '[INFO] MATTERMOST_WEBHOOK_URL not set, skipping Mattermost notification.', file=sys.stderr)
                             # if play_sound:
                             #     play_notification_sound(SOUND_FILE)
                 else:
@@ -128,6 +135,25 @@ def get_latest_commits(token, interval=30, repo_filter=None, play_sound=True):
         except Exception as e:
             print(Fore.RED + f'[EXCEPTION] {e}', file=sys.stderr)
             time.sleep(interval)
+            
+def send_notification_to_mattermost(message):
+    mattermost_webhook_url = os.environ.get('MATTERMOST_WEBHOOK_URL')
+    if not mattermost_webhook_url:
+        print(Fore.RED + '[ERROR] MATTERMOST_WEBHOOK_URL environment variable is not set.', file=sys.stderr)
+        return
+
+    payload = {
+        'text': message
+    }
+    
+    try:
+        response = requests.post(mattermost_webhook_url, json=payload)
+        if response.status_code != 200:
+            print(Fore.RED + f'[ERROR] Failed to send notification to Mattermost: {response.status_code}', file=sys.stderr)
+        else:
+            print(Fore.GREEN + '[SUCCESS] Notification sent to Mattermost', flush=True)
+    except Exception as e:
+        print(Fore.RED + f'[EXCEPTION] {e}', file=sys.stderr)
 
 def main():
     parser = argparse.ArgumentParser(prog='gitloop', description='Real-time GitHub commit monitor (CLI)')
@@ -141,6 +167,7 @@ def main():
     monitor_parser.add_argument('--interval', type=int, default=30, help='Polling interval in seconds (default: 30)')
     monitor_parser.add_argument('--repo', type=str, help='Only monitor this repository (format: owner/repo)')
     monitor_parser.add_argument('--no-sound', action='store_true', help='Disable sound notification for new commits')
+    monitor_parser.add_argument('--mattermost', type=str, help='Mattermost webhook URL for notifications (if not set, we will not send notifications)')
 
     # ✅ Set default to monitor (must be after defining monitor_parser)
     parser.set_defaults(command='monitor')
@@ -174,11 +201,18 @@ def main():
         interval = getattr(args, 'interval', 30)
         repo = getattr(args, 'repo', None)
         no_sound = getattr(args, 'no_sound', False)
+        mattermost = getattr(args, 'mattermost', None)
 
         if repo:
             print(Fore.YELLOW + f'Polling for new commits in {repo} every {interval} seconds.')
         else:
             print(Fore.YELLOW + f'Polling for new commits in all repos every {interval} seconds.')
+        
+        if mattermost:
+            os.environ['MATTERMOST_WEBHOOK_URL'] = mattermost
+            print(Fore.YELLOW + f'Sending notifications to Mattermost webhook: {mattermost}')
+        else:
+            print(Fore.LIGHTBLACK_EX + 'No Mattermost webhook URL set, notifications will not be sent.')
 
         if no_sound:
             print(Fore.LIGHTBLACK_EX + 'Sound notification is disabled.')
