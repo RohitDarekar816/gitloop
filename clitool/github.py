@@ -2,13 +2,11 @@ from imaplib import Commands
 import requests
 import os
 import sys
-import threading
 import time
 from colorama import init, Fore, Style
 from datetime import datetime, timedelta, timezone
 import pytz
 import argparse
-from playsound import playsound
 
 init(autoreset=True)
 
@@ -40,16 +38,6 @@ def is_token_valid(token):
     headers = {'Authorization': f'token {token}'}
     resp = requests.get(f'{GITHUB_API_URL}/user', headers=headers)
     return resp.status_code == 200
-
-# SOUND_FILE = os.path.abspath('./ding.wav').replace('\\', '/')
-
-# def play_notification_sound(SOUND_FILE):
-#     def _play():
-#         try:
-#             playsound(SOUND_FILE)
-#         except Exception as e:
-#             print(Fore.RED + f'[ERROR] Could not play sound: {e}', file=sys.stderr)
-#     threading.Thread(target=_play, daemon=True).start()
 
 def github_device_flow(client_id, scope='repo'):
     # Step 1: Get device/user code
@@ -121,7 +109,6 @@ def get_latest_commits(token, interval=30, repo_filter=None, play_sound=True):
                             timestamp_ist = commit_dt_ist.strftime('%Y-%m-%d %H:%M:%S IST')
                             url = commit['html_url']
                             print(f"{Fore.CYAN}[NEW COMMIT]{Style.RESET_ALL} Repo: {Fore.YELLOW}{repo_name}{Style.RESET_ALL}\n  Author: {Fore.GREEN}{author}{Style.RESET_ALL}\n  Message: {Fore.MAGENTA}{msg}{Style.RESET_ALL}\n  Time: {Fore.BLUE}{timestamp_ist}{Style.RESET_ALL}\n  URL: {Fore.LIGHTWHITE_EX}{url}{Style.RESET_ALL}\n", flush=True)
-                            # play_notification_sound(SOUND_FILE)
                             # check if mattermost webhook URL is set
                             if 'MATTERMOST_WEBHOOK_URL' in os.environ:
                                 # Send notification to Mattermost
