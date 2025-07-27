@@ -2,9 +2,21 @@
 requires = ["setuptools >= 77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project.scripts]
+gitloop = "clitool.github:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+clitool = ["ding.wav"]
+
 [project]
 name = "Gitloop"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
   { name="Rohit Darekar", email="rohitdarekar816@gmail.com" },
 ]

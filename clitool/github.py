@@ -7,6 +7,7 @@ from colorama import init, Fore, Style
 from datetime import datetime, timedelta, timezone
 import pytz
 import argparse
+from clitool import __version__ 
 
 init(autoreset=True)
 
@@ -14,7 +15,7 @@ GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
 GITHUB_API_URL = 'https://api.github.com'
 GITHUB_DEVICE_CODE_URL = 'https://github.com/login/device/code'
 GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token'
-
+SOUND_FILE = os.path.join(os.path.dirname(__file__), 'ding.wav')
 seen_commits = set()
 TOKEN_FILE = os.path.expanduser('~/.github_commit_monitor_token')
 
@@ -146,10 +147,12 @@ def send_notification_to_mattermost(message):
 
 def main():
     parser = argparse.ArgumentParser(prog='gitloop', description='Real-time GitHub commit monitor (CLI)')
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}', help='Show the version of gitloop')
     subparsers = parser.add_subparsers(dest='command', help='Subcommands')
 
     # --- login subcommand ---
     login_parser = subparsers.add_parser('login', help='Authenticate with GitHub using a personal Client ID')
+    
 
     # --- monitor subcommand (default/legacy behavior) ---
     monitor_parser = subparsers.add_parser('monitor', help='Start monitoring GitHub commits')
@@ -165,14 +168,17 @@ def main():
 
 
     if args.command == 'login':
-        client_id = input(Fore.CYAN + 'Enter your GitHub Client ID: ' + Style.RESET_ALL).strip()
-        if not client_id:
-            print(Fore.RED + '[ERROR] Client ID is required.', file=sys.stderr)
-            sys.exit(1)
-        token = github_device_flow(client_id)
-        save_token(token)
-        print(Fore.GREEN + 'GitHub token saved. You can now run: gitloop monitor')
-        sys.exit(0)
+        try:
+            client_id = input(Fore.CYAN + 'Enter your GitHub Client ID: ' + Style.RESET_ALL).strip()
+            if not client_id:
+                print(Fore.RED + '[ERROR] Client ID is required.', file=sys.stderr)
+                sys.exit(1)
+            token = github_device_flow(client_id)
+            save_token(token)
+            print(Fore.GREEN + 'GitHub token saved. You can now run: gitloop monitor')
+        except KeyboardInterrupt:
+            print(Fore.LIGHTBLUE_EX + '\n[INFO] Gitloop monitor stopped by user. Goodbye!')
+            sys.exit(0)
 
     elif args.command == 'monitor' or args.command is None:
         print(Fore.YELLOW + 'Starting GitHub CLI commit monitor...')
