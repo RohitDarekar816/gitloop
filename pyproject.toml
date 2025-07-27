@@ -16,7 +16,7 @@ clitool = ["ding.wav"]
 
 [project]
 name = "Gitloop"
-version = "0.1.1"
+version = "0.1.2"
 authors = [
   { name="Rohit Darekar", email="rohitdarekar816@gmail.com" },
 ]
